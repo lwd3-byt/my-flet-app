@@ -2,7 +2,7 @@ name: Build Flet APK
 
 on:
   push:
-    branches: [ main ] # 当您推送到 main 分支时触发打包
+    branches: [ main ]
 
 jobs:
   build:
@@ -11,6 +11,12 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
+    - name: Set up Java (JDK 17) # 👈 修复安卓打包失败的关键：补全 Java 环境
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -22,10 +28,15 @@ jobs:
       with:
         channel: 'stable'
 
+    - name: Install Linux Dependencies # 👈 预防 Linux 系统下 Flet 依赖缺失报错
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libmpv-dev libglib2.0-dev
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install flet
 
     - name: Build APK
